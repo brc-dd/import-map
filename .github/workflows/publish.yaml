@@ -1,0 +1,77 @@
+name: publish
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.versions.outputs.skip }}
+      upstream: ${{ steps.versions.outputs.upstream }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: denoland/import_map
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+      - id: versions
+        run: |
+          set -euo pipefail
+          TAG="$(git describe --tags --abbrev=0)"
+          UPSTREAM_VERSION="${TAG#v}"
+          echo "upstream=${UPSTREAM_VERSION}" >> "$GITHUB_OUTPUT"
+
+          META_URL="https://jsr.io/@brc-dd/import-map/meta.json"
+          HTTP_CODE="$(curl -sS -w '%{http_code}' -o meta.json "${META_URL}" || true)"
+          if [ "${HTTP_CODE}" = "200" ]; then
+            JSR_LATEST="$(jq -r '.latest // empty' meta.json)"
+          else
+            JSR_LATEST=""
+          fi
+          echo "jsr_latest=${JSR_LATEST}" >> "$GITHUB_OUTPUT"
+
+          if [ -n "${JSR_LATEST}" ] && [ "${UPSTREAM_VERSION}" = "${JSR_LATEST}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CARGO_INCREMENTAL: 0
+      GH_ACTIONS: 1
+      RUST_BACKTRACE: full
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: denoland/import_map
+          ref: main
+      - uses: dsherret/rust-toolchain-file@v1
+      - uses: Swatinem/rust-cache@v2
+      - uses: denoland/setup-deno@v2
+      - run: deno task build
+      - run: |
+          set -euo pipefail
+          cd js
+          jq -n \
+            --arg v "${{ needs.prepare.outputs.upstream }}" \
+            '{
+              name: "@brc-dd/import-map",
+              version: $v,
+              license: "MIT",
+              exports: "./mod.ts"
+            }' > jsr.json
+          deno publish
