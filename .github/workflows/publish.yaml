@@ -67,9 +67,9 @@ jobs:
       - uses: denoland/setup-deno@v2
       - run: |
           set -euo pipefail
-          sed -i '' \
-            -e 's/^js-sys = "=[^"]*"/js-sys = "=0.3.77"/' \
-            -e 's/^wasm-bindgen = { version = "=[^"]*",/wasm-bindgen = { version = "=0.2.100",/' \
+          sed -i \
+            -e 's/^js-sys = "=[^"]\+"/js-sys = "=0.3.77"/' \
+            -e 's/^wasm-bindgen = { version = "=[^"]\+",/wasm-bindgen = { version = "=0.2.100",/' \
             wasm/Cargo.toml
           cp LICENSE js/LICENSE.md
           deno run -A jsr:@deno/wasmbuild@0.19.2 --out js
