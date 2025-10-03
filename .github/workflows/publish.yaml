@@ -60,7 +60,8 @@ jobs:
       - uses: denoland/setup-deno@v2
       - run: |
           set -euo pipefail
-          curl -fsSL https://raw.githubusercontent.com/brc-dd/import-map/refs/heads/main/out.patch | git apply -
+          curl -fsSL "https://raw.githubusercontent.com/brc-dd/import-map/${{ github.sha }}/out.patch" \
+            | git apply -
           deno task build
           cd js
           jq -n \
