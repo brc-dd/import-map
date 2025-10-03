@@ -3,11 +3,14 @@ name: publish
 on:
   schedule:
     - cron: "0 0 * * *"
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
+  id-token: write
 
 jobs:
   prepare:
