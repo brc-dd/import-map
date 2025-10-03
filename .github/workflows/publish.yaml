@@ -3,9 +3,6 @@ name: publish
 on:
   schedule:
     - cron: "0 0 * * *"
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -51,7 +48,6 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     env:
       CARGO_INCREMENTAL: 0
       GH_ACTIONS: 1
@@ -67,12 +63,8 @@ jobs:
       - uses: denoland/setup-deno@v2
       - run: |
           set -euo pipefail
-          sed -i \
-            -e 's/^js-sys = "=[^"]\+"/js-sys = "=0.3.77"/' \
-            -e 's/^wasm-bindgen = { version = "=[^"]\+",/wasm-bindgen = { version = "=0.2.100",/' \
-            wasm/Cargo.toml
-          cp LICENSE js/LICENSE.md
-          deno run -A jsr:@deno/wasmbuild@0.19.2 --out js
+          curl -fsSL https://raw.githubusercontent.com/brc-dd/import-map/refs/heads/main/out.patch | git apply -
+          deno task build
           cd js
           jq -n \
             --arg v "${{ needs.prepare.outputs.upstream }}" \

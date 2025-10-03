@@ -1,0 +1,63 @@
+diff --git a/deno.json b/deno.json
+index ad114a2..f14e589 100644
+--- a/deno.json
++++ b/deno.json
+@@ -2,7 +2,7 @@
+   "lock": false,
+   "tasks": {
+     "test": "deno test --allow-read",
+-    "build": "cp LICENSE js/LICENSE && deno run -A https://deno.land/x/wasmbuild@0.15.1/main.ts --out js"
++    "build": "cp LICENSE js/LICENSE && deno run -A jsr:@deno/wasmbuild@0.19.2 --out js"
+   },
+   "exclude": ["target", "wpt", "temp"]
+ }
+diff --git a/js/mod.ts b/js/mod.ts
+index 4dabd31..7865501 100644
+--- a/js/mod.ts
++++ b/js/mod.ts
+@@ -7,9 +7,7 @@
+  *
+  * @module
+  */
+-import { instantiate, JsImportMap } from "./import_map.generated.js";
+-
+-let wasm: Awaited<ReturnType<typeof instantiate>> | undefined;
++import { type JsImportMap, parseFromJson as _parseFromJson } from "./import_map.js";
+ 
+ export class ImportMap {
+   #inner: JsImportMap;
+@@ -38,18 +36,17 @@ export interface ImportMapJson {
+ }
+ 
+ /** Given a base and a JSON string with the contents of a import map,  */
+-export async function parseFromJson(
++export function parseFromJson(
+   baseUrl: string | URL,
+   json: string | ImportMapJson,
+   opts?: { expandImports?: boolean },
+-): Promise<ImportMap> {
+-  wasm = wasm ?? await instantiate();
++): ImportMap {
+   if (baseUrl instanceof URL) {
+     baseUrl = baseUrl.toString();
+   }
+   if (typeof json === "object") {
+     json = JSON.stringify(json);
+   }
+-  const inner = wasm.parseFromJson(baseUrl, json, opts?.expandImports ?? false);
++  const inner = _parseFromJson(baseUrl, json, opts?.expandImports ?? false);
+   return new ImportMap(inner);
+ }
+diff --git a/wasm/Cargo.toml b/wasm/Cargo.toml
+index 6fadc7f..b141f02 100644
+--- a/wasm/Cargo.toml
++++ b/wasm/Cargo.toml
+@@ -14,6 +14,6 @@ name = "import_map"
+ 
+ [dependencies]
+ import_map = { path = "../rs-lib", features = ["ext"] }
+-js-sys = "=0.3.64"
++js-sys = "=0.3.77"
+ url = "2.3.1"
+-wasm-bindgen = { version = "=0.2.87", features = ["serde-serialize"] }
++wasm-bindgen = { version = "=0.2.100", features = ["serde-serialize"] }
