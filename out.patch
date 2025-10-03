@@ -12,7 +12,7 @@ index ad114a2..f14e589 100644
    "exclude": ["target", "wpt", "temp"]
  }
 diff --git a/js/mod.ts b/js/mod.ts
-index 4dabd31..7865501 100644
+index 4dabd31..bbfd5c4 100644
 --- a/js/mod.ts
 +++ b/js/mod.ts
 @@ -7,9 +7,7 @@
@@ -26,6 +26,15 @@ index 4dabd31..7865501 100644
  
  export class ImportMap {
    #inner: JsImportMap;
+@@ -19,7 +17,7 @@ export class ImportMap {
+   }
+ 
+   /** Given a specifier and a referrer, return the resolved string URL. */
+-  resolve(specifier: string, referrer: string | URL) {
++  resolve(specifier: string, referrer: string | URL): string {
+     if (referrer instanceof URL) {
+       referrer = referrer.toString();
+     }
 @@ -38,18 +36,17 @@ export interface ImportMapJson {
  }
  

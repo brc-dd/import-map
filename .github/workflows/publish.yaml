@@ -3,6 +3,9 @@ name: publish
 on:
   schedule:
     - cron: "0 0 * * *"
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -48,18 +51,12 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      GH_ACTIONS: 1
-      RUST_BACKTRACE: full
-      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v5
         with:
           repository: denoland/import_map
           ref: main
       - uses: dsherret/rust-toolchain-file@v1
-      - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v2
       - run: |
           set -euo pipefail
