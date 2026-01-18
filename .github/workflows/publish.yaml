@@ -72,7 +72,7 @@ jobs:
               license: "MIT",
               exports: "./mod.ts",
               publish: {
-                include: ["**/*"]  
+                exclude: ["!**/*"]
               }
             }' > jsr.json
           deno publish --allow-dirty
